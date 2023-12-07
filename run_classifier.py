@@ -270,6 +270,62 @@ class MyDataProcessor(DataProcessor):
     return ['0', '1', '2']
 
 
+class ChineseConversationSentimentProcessor(DataProcessor):
+  """Base class for data converters for sequence classification data sets."""
+  
+  def get_train_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for the train set."""
+    file_path = os.path.join(data_dir, "sentiment_XS_30k.txt")
+    f = open(file_path, "r", encoding="utf-8")
+    train_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "train-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split(",")
+      line[1] = line[1].replace(' ','') # 去掉空格
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = tokenization.convert_to_unicode(str(line[0]))
+      train_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return train_data
+  
+  def get_dev_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for the dev set."""
+    file_path = os.path.join(data_dir, "sentiment_XS_test.txt")
+    f = open(file_path, "r", encoding="utf-8")
+    dev_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "dev-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split(",")
+      line[1] = line[1].replace(' ','') # 去掉空格
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = tokenization.convert_to_unicode(str(line[0]))
+      dev_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return dev_data
+
+  def get_test_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for prediction."""
+    file_path = os.path.join(data_dir, "sentiment_XS_test.txt") # 直接用验证集来输出结果
+    f = open(file_path, "r", encoding="utf-8")
+    test_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "test-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split(",")
+      line[1] = line[1].replace(' ','') # 去掉空格
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = tokenization.convert_to_unicode(str(line[0]))
+      test_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return test_data
+  
+  def get_labels(self):
+    """Gets the list of labels for this data set."""
+    return ['positive', 'negative']
+
+
 class XnliProcessor(DataProcessor):
   """Processor for the XNLI data set."""
 
@@ -856,6 +912,7 @@ def main(_):
       "mrpc": MrpcProcessor,
       "xnli": XnliProcessor,
       "my": MyDataProcessor,
+      "chineseconversationsentiment": ChineseConversationSentimentProcessor,
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
