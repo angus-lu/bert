@@ -21,6 +21,7 @@ from __future__ import print_function
 import collections
 import csv
 import os
+import pandas as pd
 import modeling
 import optimization
 import tokenization
@@ -202,6 +203,71 @@ class DataProcessor(object):
       for line in reader:
         lines.append(line)
       return lines
+
+
+class MyDataProcessor(DataProcessor):
+  """Base class for data converters for sequence classification data sets."""
+  
+  def get_train_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for the train set."""
+    file_path = os.path.join(data_dir, "train_sentiment.txt")
+    f = open(file_path, "r", encoding="utf-8")
+    train_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "train-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split("\t")
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = str(line[2])
+      train_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return train_data
+  
+  def get_dev_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for the dev set."""
+    file_path = os.path.join(data_dir, "test_sentiment.txt")
+    f = open(file_path, "r", encoding="utf-8")
+    dev_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "dev-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split("\t")
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = str(line[2])
+      dev_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return dev_data
+
+  # def get_test_examples(self, data_dir):
+  #   """Gets a collection of `InputExample`s for prediction."""
+  #   file_path = os.path.join(data_dir, "test.csv")
+  #   test_df = pd.read_csv(file_path, encoding="utf-8")
+  #   test_data = []
+  #   for index, test in enumerate(test_df.values):
+  #     guid = "test-%d" % (index)
+  #     text_a = tokenization.convert_to_unicode(str(test[0]))
+  #     label = str(test[1])
+  #     test_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+  #   return test_data
+
+  def get_test_examples(self, data_dir):
+    """Gets a collection of `InputExample`s for prediction."""
+    file_path = os.path.join(data_dir, "test_sentiment.txt") # 直接用验证集来输出结果
+    f = open(file_path, "r", encoding="utf-8")
+    test_data = []
+    index = 0
+    for line in f.readlines():
+      guid = "test-%d" % (index) # 指定一个id
+      line = line.replace("\n", "").split("\t")
+      text_a = tokenization.convert_to_unicode(str(line[1]))
+      label = str(line[2])
+      test_data.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+      index += 1
+    return test_data
+  
+  def get_labels(self):
+    """Gets the list of labels for this data set."""
+    return ['0', '1', '2']
 
 
 class XnliProcessor(DataProcessor):
@@ -659,7 +725,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
 
         scaffold_fn = tpu_scaffold
       else:
-        tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+        tf.train.init_from_checkpoint(init_checkpoint , assignment_map)
 
     tf.logging.info("**** Trainable Variables ****")
     for var in tvars:
@@ -789,6 +855,7 @@ def main(_):
       "mnli": MnliProcessor,
       "mrpc": MrpcProcessor,
       "xnli": XnliProcessor,
+      "my": MyDataProcessor,
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
